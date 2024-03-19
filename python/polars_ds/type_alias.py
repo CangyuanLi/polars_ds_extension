@@ -14,7 +14,10 @@ Alternative: TypeAlias = Literal["two-sided", "less", "greater"]
 ROCAUCStrategy: TypeAlias = Literal["macro", "weighted"]
 Distance: TypeAlias = Literal["l1", "l2", "inf", "h", "cosine", "haversine"]
 ConvMode: TypeAlias = Literal["same", "left", "right", "full", "valid"]
-
+ScaleStrategy: TypeAlias = Literal[
+    "standard", "min_max", "mean", "median", "const", "abs_max", "robust"
+]
+ImputeStrategy: TypeAlias = Literal["mean", "median", "mode", "const"]
 # Other Custom Types
 PolarsFrame: TypeAlias = Union[pl.DataFrame, pl.LazyFrame]
 
