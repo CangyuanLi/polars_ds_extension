@@ -1,3 +1,4 @@
 faker
 polars
 plotnine
+tqdm

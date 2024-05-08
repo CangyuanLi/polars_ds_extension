@@ -75,3 +75,14 @@ def test_normalize_whitespace():
         df.select(pds.normalize_whitespace("x", only_spaces=True)),
         pl.DataFrame({"x": ["a b", "ab", "a b", "a\t\nb"]}),
     )
+
+
+def test_replace_digits():
+    df = pl.DataFrame({"x": ["a1234b", "a9 123"]})
+
+    assert_frame_equal(df.select(pds.replace_digits("x")), pl.DataFrame({"x": ["ab", "a "]}))
+
+    assert_frame_equal(
+        df.select(pds.replace_digits("x", only_blocks=True)),
+        pl.DataFrame({"x": ["a1234b", "a9 "]}),
+    )

@@ -1180,3 +1180,44 @@ def normalize_whitespace(c: StrOrExpr, only_spaces: bool = False) -> pl.Expr:
         args=[expr],
         is_elementwise=True,
     )
+
+
+def replace_digits(c: StrOrExpr, value: str = "", only_blocks: bool = False) -> pl.Expr:
+    """Replace digits with the specified value, e.g. 'a123b' -> 'ab'.
+
+    Parameters
+    ----------
+    c : StrOrExpr
+    value : str, optional
+        The value to replace digits with, by default ""
+    only_blocks : bool, optional
+        When True, only words that are all digits will be affected. For example,
+        'a9 12' -> 'a9 ', by default False
+
+    Returns
+    -------
+    pl.Expr
+
+    Examples
+    --------
+    >>> df = pl.DataFrame({"a": ["a1234b", "a9 123"]})
+    >>> df.with_columns(
+    >>>     pds.replace_digits("a").alias("b"),
+    >>>     pds.replace_digits("a", only_blocks=True).alias("c"),
+    >>> )
+    shape: (2, 3)
+    ┌────────┬─────┬────────┐
+    │ a      ┆ b   ┆ c      │
+    │ ---    ┆ --- ┆ ---    │
+    │ str    ┆ str ┆ str    │
+    ╞════════╪═════╪════════╡
+    │ a1234b ┆ ab  ┆ a1234b │
+    │ a9 123 ┆ a   ┆ a9     │
+    └────────┴─────┴────────┘
+    """
+    if only_blocks:
+        pattern = r"\b\d+\b"
+    else:
+        pattern = r"\d+"
+
+    return str_to_expr(c).str.replace_all(pattern, value)

@@ -6,6 +6,7 @@ from typing import Callable
 
 import polars as pl
 import polars_ds as pds
+import tqdm
 
 BASE_PATH = Path(__file__).resolve().parents[0]
 
@@ -25,16 +26,19 @@ class Bench:
         self.timing_runs = timing_runs
 
     def run(self, funcs: list[Callable]):
-        for n_rows in self.sizes:
-            df = self.df.sample(n_rows, seed=208)
+        with tqdm.tqdm(total=len(self.sizes) * len(funcs)) as pbar:
+            for n_rows in self.sizes:
+                df = self.df.sample(n_rows, seed=208)
 
-            for f in funcs:
-                func_name = f.func.__name__ if isinstance(f, functools.partial) else f.__name__
-                time = timeit.timeit(lambda: f(df), number=self.timing_runs)
+                for f in funcs:
+                    func_name = f.func.__name__ if isinstance(f, functools.partial) else f.__name__
+                    time = timeit.timeit(lambda: f(df), number=self.timing_runs)
 
-                self.benchmark_data["Function"].append(func_name)
-                self.benchmark_data["Size"].append(n_rows)
-                self.benchmark_data["Time"].append(time)
+                    self.benchmark_data["Function"].append(func_name)
+                    self.benchmark_data["Size"].append(n_rows)
+                    self.benchmark_data["Time"].append(time)
+
+                    pbar.update()
 
         return self
 
@@ -130,6 +134,19 @@ def pds_normalize_whitespace_only_spaces(df: pl.DataFrame):
     df.select(pds.normalize_whitespace("RANDOM_STRING", only_spaces=True))
 
 
+def python_replace_digits(df: pl.DataFrame):
+    df.select(
+        pl.col("RANDOM_STRING").map_elements(
+            lambda s: "".join(c for c in s if not c.isdigit()),
+            return_dtype=pl.String,
+        )
+    )
+
+
+def pds_replace_digits(df: pl.DataFrame):
+    df.select(pds.replace_digits("RANDOM_STRING"))
+
+
 def main():
     benchmark_df = pl.read_parquet(BASE_PATH / "benchmark_df.parquet")
 
@@ -164,6 +181,8 @@ def main():
             expr_normalize_whitespace_only_spaces,
             pds_normalize_whitespace,
             pds_normalize_whitespace_only_spaces,
+            python_replace_digits,
+            pds_replace_digits,
         ]
     ).save(BASE_PATH / "benchmark_data.parquet")
 
